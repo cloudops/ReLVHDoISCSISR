@@ -28,7 +28,7 @@ invoked when an `sr-create` is called on a LUN with a single VDI with the
 `device-config:resign=true` flag . The following steps are involved:
 
 1. **LVM Resign:** The first step is to resignatre the LVM volumes, We generate
-   unique ids for the LVM physcial volume, volume group and volume groups
+   unique ids for the LVM physcial volume, volume group and logical volumes
    present in the LVM volume group.
 
 1. **SR Metadata Resign:** Once the LVM resignature is complete, we activate
@@ -37,9 +37,9 @@ invoked when an `sr-create` is called on a LUN with a single VDI with the
 
 1. **VDI Resign:** Finally, we resignature the VDIs which are present in a
    logical volume. If the VDI has any parent locators, we make sure that they
-   point to the correct ones since will change during the resign process.  We
+   point to the correct ones since they will change during the resign process.  We
    also delete any snapshots if they are present on the SR as we want the clone
-   to only contain the single active VDI. 
+   to only contain the active VDI. 
 
 1. **SR Creation:** Once all entities have been resignatured, we proceed to
    attach this LUN as an `LVMoISCSI` SR.
