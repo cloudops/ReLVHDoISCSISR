@@ -1,6 +1,6 @@
 # ReLVHDoISCSISR
 
-This Xenserver supplimental pack allows the functionality to resignature a
+This Xenserver supplemental pack allows the functionality to resignature a
 given LVMoISCSI SR which allows the SR to be reattached to the pool. This pack
 is targeted towards Xenserver 6.5
 
@@ -16,7 +16,7 @@ So essentially, we are doing a single VDI per LUN.
 The main drawback of this approach is that users cannot leverage the
 fast-snapshot/clone functionality offered by the backend storages as any
 snapshot taken on the backend storage is unaware of the underlying VDI(s) and
-metadata, and would copy the LUN block-by-block. Any attemt to attach this
+metadata, and would copy the LUN block-by-block. Any attempt to attach this
 cloned LUN onto Xenserver will result in an error as there will be metadata
 conflicts.
 
@@ -27,8 +27,8 @@ the cloned SR so there are no UUID conflicts. The resignature process is
 invoked when an `sr-create` is called on a LUN with a single VDI with the
 `device-config:resign=true` flag . The following steps are involved:
 
-1. **LVM Resign:** The first step is to resignatre the LVM volumes, We generate
-   unique ids for the LVM physcial volume, volume group and logical volumes
+1. **LVM Resign:** The first step is to resignature the LVM volumes, We generate
+   unique ids for the LVM physical volume, volume group and logical volumes
    present in the LVM volume group.
 
 1. **SR Metadata Resign:** Once the LVM resignature is complete, we activate
@@ -63,13 +63,13 @@ Setup a DDK VM and clone this repo there ([Instructions for setting up a DDK VM.
 # make
 ```
 
-This will generate `ReLVHDoISCSISR.iso` which contains the supplimental pack.
+This will generate `ReLVHDoISCSISR.iso` which contains the supplemental pack.
 Install it by attaching the ISO to Xenserver DOM0 and running the install
 script present in it. 
 
 ## Testing
 
-We have tested this on Xenserver 6.5 with Soldfire and Equalogic as the storage
+We have tested this on Xenserver 6.5 with Solidfire and Equalogic as the storage
 backends. 
 
 ## Example 
