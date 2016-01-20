@@ -29,6 +29,7 @@ import tempfile
 import xs_errors
 import lvmconfigparser
 import vhdutil
+import iscsilib
 from lvhdutil import VG_LOCATION, VG_PREFIX
 from lvutil import CMD_PVCREATE, LVM_BIN, MDVOLUME_NAME
 from pprint import pformat as pf
@@ -36,11 +37,7 @@ from pprint import pformat as pf
 CMD_VGCFGRESTORE = os.path.join(LVM_BIN, "vgcfgrestore")
 CMD_PVDISPLAY = os.path.join(LVM_BIN, "pvdisplay")
 
-CAPABILITIES = ["SR_PROBE", "SR_UPDATE", "SR_METADATA", "SR_TRIM",
-                "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH", "VDI_DETACH",
-                "VDI_GENERATE_CONFIG", "VDI_CLONE", "VDI_SNAPSHOT",
-                "VDI_RESIZE", "ATOMIC_PAUSE", "VDI_RESET_ON_BOOT/2",
-                "VDI_UPDATE"]
+CAPABILITIES = ["SR_CREATE"]
 
 CONFIGURATION = [['SCSIid', 'The scsi_id of the destination LUN'], \
                  ['target', 'IP address or hostname of the iSCSI target'], \
@@ -54,13 +51,11 @@ CONFIGURATION = [['SCSIid', 'The scsi_id of the destination LUN'], \
                  ['port', 'The network port number on which to query the target'], \
                  ['multihomed',
                   'Enable multi-homing to this target, true or false (optional, defaults to same value as host.other_config:multipathing)'], \
-                 ['usediscoverynumber', 'The specific iscsi record index to use. (optional)'], \
-                 ['allocation', 'Valid values are thick or thin (optional, defaults to thick)'],
-                 ['resign', 'Resignature the SR instead of deleting all data, true or false. Defaults to false']]
+                 ['usediscoverynumber', 'The specific iscsi record index to use. (optional)']]
 
 DRIVER_INFO = {
     'name': 'LVHD over iSCSI with resigning of duplicates',
-    'description': 'SR plugin which represents disks as Logical Volumes within a Volume Group created on an iSCSI LUN',
+    'description': 'SR plugin which resignatures SRs created on an iSCSI LUN',
     'vendor': 'CloudOps Inc',
     'copyright': '(C) 2015 CloudOps Inc',
     'driver_version': '1.0',
@@ -74,35 +69,26 @@ class ReLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
     """LVHD over ISCSI storage repository with resigning of duplicates"""
 
     LV_VHD_PREFIX = 'VHD-'
+    TYPE = "relvmoiscsi"
 
-    def handles(type):
-        if __name__ == '__main__':
-            name = sys.argv[0]
-        else:
-            name = __name__
-        if name.endswith("LVMoISCSISR"):
-            return type == "lvmoiscsi"
-        if type == "relvhdoiscsi":
-            return True
-        return False
+    def handles(srtype):
+        return srtype == ReLVHDoISCSISR.TYPE
 
     handles = staticmethod(handles)
 
     def create(self, sr_uuid, size):
+        try:
 
-        if self._checkConfigResign():
-            if util.test_SCSIid(self.session, sr_uuid, self.SCSIid):
-                raise xs_errors.XenError('SRInUse')
+            # attach the device
+            util.SMlog("Trying to attach iscsi disk")
+
+            self.iscsi.attach(sr_uuid)
+            if not self.iscsi.attached:
+                raise xs_errors.XenError('SRNotAttached')
+
+            util.SMlog("Attached iscsi disk at %s \n" % self.iscsi.path)
 
             try:
-                # attach the device
-                util.SMlog("Trying to attach iscsi disk")
-
-                self.iscsi.attach(sr_uuid)
-                if not self.iscsi.attached:
-                    raise xs_errors.XenError('SRNotAttached')
-
-                util.SMlog("Attached iscsi disk at %s \n" % self.iscsi.path)
 
                 # generate new UUIDs for VG and LVs
                 old_vg_name = self._getVgName(self.dconf['device'])
@@ -125,17 +111,16 @@ class ReLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
                 self._resignVdis(new_vg_name, lvUuidMap)
                 self._deleteAllSnapshots(new_vdi_info)
 
-                # set the mdexists flag so that attach will not create it again
-                self.mdexists = self.lvmCache.checkLV(self.MDVOLUME_NAME)
-
             except:
                 util.logException("RESIGN_CREATE")
                 raise
 
-            util.SMlog("Calling Attach for new VDIs")
-            return super(ReLVHDoISCSISR, self).attach(sr_uuid)  # resigned disk, attach it
+        finally:
+            iscsilib.logout(self.iscsi.target, self.iscsi.targetIQN, all=True)
 
-        return super(ReLVHDoISCSISR, self).create(sr_uuid, size)  # fresh disk, initialize it
+
+
+        raise xs_errors.XenError("The SR has been successfully resigned. Use the lvmoiscsi type to attach it")
 
     def _resignLvm(self, new_uuid, old_vg_name, lvUuidMap, lvm_config_dict):
 
@@ -347,29 +332,34 @@ class ReLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
 
         return vg_name
 
-    def _checkConfigResign(self):
-        """
-        Checks if the caller wants to resign the SR first based on the
-        args passed to sr-create next based on the host-config
 
-        :return: True if resign is enabled, False otherwise
-        """
+    # Other calls will raise unimplemented
 
-        if 'resign' in self.dconf and self.dconf['resign'].lower() == 'true':
-            return True
+    def delete(self, uuid):
+        raise xs_errors.XenError('Unimplemented')
 
-        # explicit false
-        if 'resign' in self.dconf and self.dconf['resign'].lower() == 'false':
-            return False
+    def update(self, uuid):
+        raise xs_errors.XenError('Unimplemented')
 
-        assert self.host_ref, "Host reference not found"
+    def attach(self, uuid):
+        raise xs_errors.XenError('Unimplemented')
 
-        other_config = self.session.xenapi.host.get_other_config(self.host_ref)
+    def detach(self, uuid):
+        raise xs_errors.XenError('Unimplemented')
 
-        if 'resign' in other_config and other_config['resign'].lower() == 'true':
-            return True
+    def scan(self, uuid):
+        raise xs_errors.XenError('Unimplemented')
 
-        return False
+    def probe(self, uuid):
+        raise xs_errors.XenError('Unimplemented')
+
+    def replay(self, uuid):
+        raise xs_errors.XenError('Unimplemented')
+
+    def forget_vdi(self, uuid):
+        raise xs_errors.XenError('Unimplemented')
+
+
 
 if __name__ == '__main__':
     SRCommand.run(ReLVHDoISCSISR, DRIVER_INFO)

@@ -28,6 +28,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %post
 
-cd /opt/xensource/sm/; ln -sf "ReLVHDoISCSISR.py" "LVMoISCSISR"
+cd /opt/xensource/sm/; ln -sf "ReLVHDoISCSISR.py" "ReLVMoISCSISR"
 
 %changelog
