@@ -92,6 +92,7 @@ class ReLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
 
                 # generate new UUIDs for VG and LVs
                 old_vg_name = self._getVgName(self.dconf['device'])
+
                 lvm_config_dict = self._getLvmInfo(old_vg_name)
                 lvUuidMap = {}  # Maps old lv uuids to new uuids
 
@@ -104,6 +105,7 @@ class ReLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
                 new_vg_name = VG_PREFIX + sr_uuid
 
                 self._resignLvm(sr_uuid, old_vg_name, lvUuidMap, lvm_config_dict)
+
                 # causes creation of nodes and activates the lvm volumes
                 LVHDSR.LVHDSR.load(self, sr_uuid)
 
@@ -111,14 +113,19 @@ class ReLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
                 self._resignVdis(new_vg_name, lvUuidMap)
                 self._deleteAllSnapshots(new_vdi_info)
 
+
+                # Detach LVM
+                self.lvmCache.deactivateNoRefcount(MDVOLUME_NAME)
+                for newUuid in lvUuidMap.values():
+                    new_lv_name = self.LV_VHD_PREFIX + newUuid
+                    self.lvmCache.deactivateNoRefcount(new_lv_name)
+
             except:
                 util.logException("RESIGN_CREATE")
                 raise
 
         finally:
             iscsilib.logout(self.iscsi.target, self.iscsi.targetIQN, all=True)
-
-
 
         raise xs_errors.XenError("The SR has been successfully resigned. Use the lvmoiscsi type to attach it")
 
@@ -168,7 +175,7 @@ class ReLVHDoISCSISR(LVHDoISCSISR.LVHDoISCSISR):
 
         # remove the tempfile which stored the config
         os.remove(config_file)
-        util.SMlog("RESIGN DONE.")
+        util.SMlog("RESIGN LVM DONE.")
 
 
     def _getLvmInfo(self, vg_name):
