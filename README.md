@@ -76,7 +76,7 @@ script present in it.
 ## Testing
 
 We have tested this on Xenserver 6.5 with Solidfire and Equalogic as the storage
-backends. 
+backends. You can find the testing doc [Here.](docs/xenserver-testing.pdf)
 
 ## Example 
 
