@@ -22,10 +22,10 @@ conflicts.
 
 ## Overview of the resignature approach
 
-The plugin provided here will resignature the UUIDs during a create/attach of
+The plugin provided here will resignature the UUIDs during a create of
 the cloned SR so there are no UUID conflicts. The resignature process is
 invoked when an `sr-create` is called on a LUN with a single VDI with the
-`device-config:resign=true` flag . The following steps are involved:
+`type=relvmoiscsi` flag . The following steps are involved:
 
 1. **LVM Resign:** The first step is to resignature the LVM volumes, We generate
    unique ids for the LVM physical volume, volume group and logical volumes
@@ -41,17 +41,23 @@ invoked when an `sr-create` is called on a LUN with a single VDI with the
    also delete any snapshots if they are present on the SR as we want the clone
    to only contain the active VDI. 
 
-1. **SR Creation:** Once all entities have been resignatured, we proceed to
-   attach this LUN as an `LVMoISCSI` SR.
+1. **SR Creation:** Once all entities have been resignatured, we error out with 
+   a _resign successful_ message (see example).
 
+1. **SR Reattach** This new SR is ready to be attached back to the pool.We  use
+   the standard commands with  `type=lvmoiscsi`, which is the default for ISCSI
+   LUNs.
 
 ## Configuration 
 
-We have added a `resign=(true|false)` in the `device-config` when `sr-create`
-is invoked. If no `resign` option is provided, the default is assumed to be
-`false` in which case Xenserver will reformat and create an empty SR. We have
-also added a global `resign=(true|false)` in `host-config:other-config`which
-when set will try to do a resignature by default on an LVMoISCSI `sr-create`. 
+We have added a new `type` of SR on Xenserver called `relvmoiscsi`. To make this 
+avaliable, you have to restart xapi after installing this pack.
+
+Restart by using:
+
+```
+# /etc/init.d/xapi restart
+```
 
 ## Building 
 
@@ -75,10 +81,20 @@ backends.
 ## Example 
 
 ```bash
-xe sr-create name-label=syed-single-clone type=lvmoiscsi \
+# xe sr-create name-label=syed-single-clone type=relvmoiscsi \
                 device-config:target=172.31.255.200 \
                 device-config:targetIQN=$IQN  \
                 device-config:SCSIid=$SCSIid \
                 device-config:resign=true \
                 shared=true 
+Error code: SR_BACKEND_FAILURE_1
+Error parameters: , Error reporting error, unknown key The SR has been successfully resigned. Use the lvmoiscsi type to attach it,
+#
 ```
+
+## Notes
+1. Since this plugin modifies the internal structure of SR, a failure during the operation might result in an un-recoverable SR. **Use this plugin only on 
+SRs where you can afford data loss (eg clones). Do not use this on an SR which does not have a way to recover in case of failure**
+
+1. As a part of the resignature approach, the plugin deletes all the snapshots that are present on the SR leaving just the VDI. This is expected behaviour 
+and should not be considered as an error.
