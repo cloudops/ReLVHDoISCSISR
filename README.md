@@ -73,6 +73,40 @@ This will generate `ReLVHDoISCSISR.iso` which contains the supplemental pack.
 Install it by attaching the ISO to Xenserver DOM0 and running the install
 script present in it. 
 
+# Installing
+Copy the `ReLVHDoISCSISR.iso` from this repo to the XenServer host where you want to install the pack. 
+
+```bash
+
+# scp ReLVHDoISCSISR.iso root@172.31.0.33:
+
+```
+
+Mount the iso on the XenServer and run the install script. Restart XAPI after install. 
+
+```bash
+
+[root@coe-hq-xen03 ~]# mkdir /tmp/isomount
+[root@coe-hq-xen03 ~]# mount ReLVHDoISCSISR.iso /tmp/isomount/ -o loop
+mount: ReLVHDoISCSISR.iso is write-protected, mounting read-only
+[root@coe-hq-xen03 ~]# cd /tmp/isomount/
+[root@coe-hq-xen03 isomount]# ./install.sh 
+Installing 'LVHDoISCSISR with SR resigning'...
+
+Preparing...                ########################################### [100%]
+   1:ReLVHDoISCSISR         ########################################### [100%]
+Pack installation successful.
+[root@coe-hq-xen03 isomount]# service xapi restart
+Stopping xapi: ..                                          [  OK  ]
+Starting xapi: OK                                          [  OK  ]
+[root@coe-hq-xen03 isomount]# cd
+[root@coe-hq-xen03 ~]# umount /tmp/isomount 
+[root@coe-hq-xen03 ~]# rm ReLVHDoISCSISR.iso 
+rm: remove regular file `ReLVHDoISCSISR.iso'? y
+[root@coe-hq-xen03 ~]# 
+
+```
+
 ## Testing
 
 We have tested this on Xenserver 6.5 with Solidfire and Equalogic as the storage
