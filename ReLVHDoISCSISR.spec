@@ -29,5 +29,6 @@ rm -rf $RPM_BUILD_ROOT
 %post
 
 cd /opt/xensource/sm/; ln -sf "ReLVHDoISCSISR.py" "ReLVMoISCSISR"
+cd /opt/xensource/sm/; ln -sf "VDILUNSR.py" "VDILUNSR"
 
 %changelog
