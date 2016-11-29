@@ -342,14 +342,6 @@ class VDILUN(VDI.VDI):
         if self.attached:
             raise xs_errors.XenError('VDIInUse')
 
-        try :
-            self.validate_iqn()
-            self.attach(sr_uuid, vdi_uuid)
-            util.zeroOut(self.path, 0, self.ZEROOUT_BLOCK_SIZE)
-            self.detach(sr_uuid, vdi_uuid)
-        except:
-            pass
-
         self._db_forget()
         self.sr._updateStats(self.sr.uuid, -self.size)
 
