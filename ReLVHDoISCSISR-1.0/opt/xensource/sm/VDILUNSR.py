@@ -18,7 +18,6 @@
 # VDI-per-LUN SR implementation
 #
 import os
-
 import SR, VDI, SRCommand, util
 import lvhdutil
 import vhdutil
@@ -69,6 +68,16 @@ VHD_COOKIE = "conectix"
 def log(message):
     util.SMlog("#"* 40 + str(message) + "#"*20)
 
+def _checkTGT(tgtIQN, tgt=''):
+    if not is_iscsi_daemon_running():
+        return False
+    iscsi_path = "/dev/iscsi/" + tgtIQN
+    return os.path.isdir(iscsi_path)
+
+def is_iscsi_daemon_running():
+    cmd = ["/sbin/pidof", "-s", "/sbin/iscsid"]
+    (rc,stdout,stderr) = util.doexec(cmd)
+    return (rc==0)
 
 class VDILUNSR(SR.SR):
     """VHDoISCSI storage repository"""
@@ -297,7 +306,7 @@ class VDILUN(VDI.VDI):
 
         self.attached = False
         try:
-            self.attached = iscsilib._checkTGT(self.iqn)
+            self.attached = _checkTGT(self.iqn)
         except:
             pass
 
