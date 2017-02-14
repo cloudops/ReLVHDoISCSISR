@@ -79,6 +79,21 @@ def is_iscsi_daemon_running():
     (rc,stdout,stderr) = util.doexec(cmd)
     return (rc==0)
 
+def iscsi_login(portal, target, username, password, username_in="", password_in="",
+          multipath=False):
+    if username != "" and password != "":
+        iscsilib.set_chap_settings(portal, target, username, password, username_in, password_in)
+    iscsilib.set_replacement_tmo(portal,target, multipath)
+    cmd = ["iscsiadm", "-m", "node", "-p", portal, "-T", target, "-l"]
+    failuremessage = "Failed to login to target."
+    try:
+        (stdout,stderr) = iscsilib.exn_on_failure(cmd,failuremessage)
+        iscsilib.wait_for_devs(target, portal)
+    except:
+        raise xs_errors.XenError('ISCSILogin')
+
+
+
 class VDILUNSR(SR.SR):
     """VHDoISCSI storage repository"""
 
@@ -459,7 +474,7 @@ class VDILUN(VDI.VDI):
 
     def login_target(self):
         portal = "%s:%s" % (self.target, self.port)
-        iscsilib.login(portal, self.iqn, self.chapuser, self.chappass)
+        iscsi_login(portal, self.iqn, self.chapuser, self.chappass)
         # TODO CHap
         path = os.path.join("/dev/iscsi", self.iqn, portal, "LUN0")
         return path
