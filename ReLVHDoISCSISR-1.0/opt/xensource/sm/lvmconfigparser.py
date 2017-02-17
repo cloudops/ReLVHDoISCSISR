@@ -16,7 +16,12 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 import os
-import simplejson
+
+try:
+    import simplejson as json
+except:
+    import json
+
 
 
 class LvmConfigParser(object):
@@ -111,7 +116,7 @@ class LvmConfigParser(object):
                 if line == ']':
                     break
 
-        self.cur_entry[key] = simplejson.loads(value)
+        self.cur_entry[key] = json.loads(value)
         self.current_line += 1
 
     def _parseDictStart(self, lines):
