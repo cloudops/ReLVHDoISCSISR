@@ -32,6 +32,6 @@ cd /opt/xensource/sm/; ln -sf "ReLVHDoISCSISR.py" "ReLVMoISCSISR"
 cd /opt/xensource/sm/; ln -sf "VDILUNSR.py" "VDILUNSR"
 
 # Whitelist vdilun plugin for XenServer 7.0
-if [[ -z $(cat /etc/xapi.conf |grep 'sm-plugins='| grep vdilun) ]] ; then sed -i '/^sm-plugins/ s/$/ vdilun/' /etc/xapi.conf ; fi
+if [[ -z $(cat /etc/xapi.conf |grep 'sm-plugins='| grep vdilun) ]] ; then sed -i '/^sm-plugins/ s/$/ vdilun relvmoiscsi/' /etc/xapi.conf ; fi
 
 %changelog
