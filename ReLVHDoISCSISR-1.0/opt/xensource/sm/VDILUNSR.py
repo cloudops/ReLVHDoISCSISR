@@ -169,7 +169,7 @@ class VDILUNSR(SR.SR):
         log(vdis_in_sr)
         for vdi_ref in vdis_in_sr:
             vdi = self.session.xenapi.VDI.get_record(vdi_ref)
-            self.vdis[vdi['uuid']] = VDILUN(self, vdi['uuid'])
+            self.vdis[vdi['uuid']] = vdi
 
     def attach(self, sr_uuid):
         iscsilib.ensure_daemon_running_ok(self.localIQN)
