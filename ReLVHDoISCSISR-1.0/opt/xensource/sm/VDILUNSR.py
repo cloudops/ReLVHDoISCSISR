@@ -169,7 +169,7 @@ class VDILUNSR(SR.SR):
         log(vdis_in_sr)
         for vdi_ref in vdis_in_sr:
             vdi = self.session.xenapi.VDI.get_record(vdi_ref)
-            self.vdis[vdi['uuid']] = vdi
+            self.vdis[vdi['uuid']] = VDILUN(self, vdi['uuid'])
 
     def attach(self, sr_uuid):
         iscsilib.ensure_daemon_running_ok(self.localIQN)
@@ -319,12 +319,6 @@ class VDILUN(VDI.VDI):
         self.chapuser = ""
         self.chappass = ""
 
-        self.attached = False
-        try:
-            self.attached = _checkTGT(self.iqn)
-        except:
-            pass
-
     def introduce(self, sr_uuid, vdi_uuid):
         log("Calling VDI introduce")
 
@@ -363,7 +357,7 @@ class VDILUN(VDI.VDI):
         if not self.sr.vdis.has_key(vdi_uuid):
             raise xs_errors.XenError('VDIUnavailable')
 
-        if self.attached:
+        if _checkTGT(self.iqn):
             raise xs_errors.XenError('VDIInUse')
 
         self._db_forget()
@@ -417,7 +411,7 @@ class VDILUN(VDI.VDI):
         size = util.roundup(self.VHD_SIZE_INC, size)
         old_size = self.size
 
-        if not self.attached:
+        if not _checkTGT(self.iqn):
             self.attach(sr_uuid, vdi_uuid)
 
         vhdutil.setSizeVirtFast(self.path, size)
