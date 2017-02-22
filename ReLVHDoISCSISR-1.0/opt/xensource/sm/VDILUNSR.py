@@ -66,7 +66,8 @@ SR_TYPE_VDILUN = "vdilun"
 VHD_COOKIE = "conectix"
 
 def log(message):
-    util.SMlog("#"* 40 + str(message) + "#"*20)
+    pass
+    # util.SMlog("#"* 40 + str(message) + "#"*20)
 
 def _checkTGT(tgtIQN, tgt=''):
     if not is_iscsi_daemon_running():
@@ -164,12 +165,6 @@ class VDILUNSR(SR.SR):
 
         self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
 
-        vdis_in_sr = self.session.xenapi.SR.get_VDIs(self.sr_ref)
-
-        log(vdis_in_sr)
-        for vdi_ref in vdis_in_sr:
-            vdi = self.session.xenapi.VDI.get_record(vdi_ref)
-            self.vdis[vdi['uuid']] = VDILUN(self, vdi['uuid'])
 
     def attach(self, sr_uuid):
         iscsilib.ensure_daemon_running_ok(self.localIQN)
@@ -181,8 +176,9 @@ class VDILUNSR(SR.SR):
             raise xs_errors.XenError('LVMMaster')
 
         # delete only when there are no VDIs
+        self.vdis_in_sr = self.session.xenapi.SR.get_VDIs(self.sr_ref)
 
-        if len(self.vdis) > 0:
+        if len(self.vdis_in_sr) > 0:
             raise xs_errors.XenError('SRNotEmpty')
 
         # do nothing, the  map will automatically be removed
@@ -236,11 +232,9 @@ class VDILUNSR(SR.SR):
         # TODO: Should probe the VDIs as well ?
         log("Calling vdilunsr scan")
         self.physical_size = 536870912000 # 500 GiB TODO: Fix
-        return super(VDILUNSR, self).scan(sr_uuid)
 
     def refresh(self):
         # TODO: Not sure what to do here
-
         log("Calling vdilunsr refresh")
 
     def vdi(self, uuid):
