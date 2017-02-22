@@ -89,10 +89,28 @@ def iscsi_login(portal, target, username, password, username_in="", password_in=
     failuremessage = "Failed to login to target."
     try:
         (stdout,stderr) = iscsilib.exn_on_failure(cmd,failuremessage)
-        iscsilib.wait_for_devs(target, portal)
+        if not iscsilib.wait_for_devs(target, portal):
+            raise xs_errors.XenError('ISCSILogin')
     except:
         raise xs_errors.XenError('ISCSILogin')
 
+def create_iscsi_record(portal, port, target):
+    portal_str = "%s:%s" % (portal, port)
+    cmd = ["iscsiadm", "-m", "node", "-p", portal_str, "-T", target, "-o",  "new"]
+    failuremessage = "Unable to create an iSCSI record %s:%s" %  (target, portal)
+    try:
+        (stdout,stderr) = iscsilib.exn_on_failure(cmd,failuremessage)
+    except:
+        raise xs_errors.XenError('ISCSILogin')
+
+def delete_iscsi_record(portal, port, target):
+    portal_str = "%s:%s" % (portal, port)
+    cmd = ["iscsiadm", "-m", "node", "-p", portal_str, "-T", target, "-o", "delete"]
+    failuremessage = "Unable to delete an iSCSI record %s:%s" %  (target, portal)
+    try:
+        (stdout,stderr) = iscsilib.exn_on_failure(cmd,failuremessage)
+    except:
+        raise xs_errors.XenError('ISCSILogout')
 
 
 class VDILUNSR(SR.SR):
@@ -106,8 +124,7 @@ class VDILUNSR(SR.SR):
     handles = staticmethod(handles)
 
     def load(self, sr_uuid):
-
-        log("Calling vdilunsr load")
+        log("VDILUN SR load UUID: %s" % sr_uuid)
 
         if not self.dconf.has_key('target'):
             raise xs_errors.XenError('ConfigServerMissing')
@@ -167,8 +184,8 @@ class VDILUNSR(SR.SR):
 
 
     def attach(self, sr_uuid):
+        log("VDILUN SR attach UUID: %s" % sr_uuid)
         iscsilib.ensure_daemon_running_ok(self.localIQN)
-        log("Calling vdilunsr attach")
 
     def detach(self, sr_uuid):
         # Should logout of all the LUNS?
@@ -177,16 +194,14 @@ class VDILUNSR(SR.SR):
 
         # delete only when there are no VDIs
         self.vdis_in_sr = self.session.xenapi.SR.get_VDIs(self.sr_ref)
-
         if len(self.vdis_in_sr) > 0:
             raise xs_errors.XenError('SRNotEmpty')
 
         # do nothing, the  map will automatically be removed
-        log("Calling vdilunsr detach")
+        log("vdilunsr detached UUID:%s" %  sr_uuid)
 
     def create(self, sr_uuid, size):
-
-        log("Calling vdilunsr create")
+        log("vdilunsr create UUID: %s Size : %d" % (sr_uuid, size))
         if not self.isMaster:
             util.SMlog('sr_create blocked for non-master')
             raise xs_errors.XenError('LVMMaster')
@@ -210,8 +225,7 @@ class VDILUNSR(SR.SR):
         self.detach(sr_uuid)
 
     def probe(self):
-
-        log("Calling vdilunsr probe")
+        log("vdilunsr probe")
         SRs = self.session.xenapi.SR.get_all_records()
         Rec = {}
         for sr in SRs:
@@ -229,16 +243,9 @@ class VDILUNSR(SR.SR):
 
 
     def scan(self, sr_uuid):
-        # TODO: Should probe the VDIs as well ?
-        log("Calling vdilunsr scan")
-        self.physical_size = 536870912000 # 500 GiB TODO: Fix
-
-    def refresh(self):
-        # TODO: Not sure what to do here
-        log("Calling vdilunsr refresh")
+        log("vdilunsr scan UUID:%s" % sr_uuid)
 
     def vdi(self, uuid):
-        log("Calling vdilunsr vdi")
         return VDILUN(self, uuid)
 
     def forget_vdi(self, uuid):
@@ -246,7 +253,6 @@ class VDILUNSR(SR.SR):
 
 
     def _updateStats(self, uuid, virtAllocDelta):
-
         valloc = int(self.session.xenapi.SR.get_virtual_allocation(self.sr_ref))
         # TODO Fix
         # self.virtual_allocation = valloc + virtAllocDelta
@@ -344,10 +350,7 @@ class VDILUN(VDI.VDI):
         return VDI.VDI.get_params(self)
 
     def delete(self, sr_uuid, vdi_uuid):
-
-        # TODO: checks if no vbd exists
         log("Calling VDI DELLETE")
-
         if not self.sr.vdis.has_key(vdi_uuid):
             raise xs_errors.XenError('VDIUnavailable')
 
@@ -359,7 +362,6 @@ class VDILUN(VDI.VDI):
 
     def attach(self, sr_uuid, vdi_uuid):
         # Does the iscsi login
-
         self.iqn = self.validate_iqn()
         self.path = self.login_target()
 
@@ -370,8 +372,6 @@ class VDILUN(VDI.VDI):
             util.SMlog("Unable to detect LUN attached to host [%s]" % self.sr.path)
             raise xs_errors.XenError('VDIUnavailable')
 
-
-
         ret = super(VDILUN, self).attach(sr_uuid, vdi_uuid)
         self.attached = True
         return ret
@@ -381,6 +381,7 @@ class VDILUN(VDI.VDI):
         log("Calling VDI DETACH")
         portal = "%s:%s" % (self.target, self.port)
         iscsilib.logout(portal, self.iqn)
+        delete_iscsi_record(self.target, self.port, self.iqn)
         self.attached = False
 
     def resize(self, sr_uuid, vdi_uuid, size):
@@ -422,7 +423,6 @@ class VDILUN(VDI.VDI):
         return VDI.VDI.get_params(self)
 
     def introduce_vdi(self, vdi_uuid):
-        
         self.location = self.iqn
         self.utilisation = self.size
         self.ref = self._db_introduce()
@@ -443,7 +443,6 @@ class VDILUN(VDI.VDI):
         return util.roundup(self.VHD_SIZE_INC, size)
 
     def validate_iqn(self):
-
         if not self.iqn:
             vdi_sm_config = self.sr.srcmd.params["vdi_sm_config"]
             iqn = vdi_sm_config.get("targetIQN")
@@ -455,8 +454,7 @@ class VDILUN(VDI.VDI):
             raise xs_errors.XenError('ConfigTargetIQNMissing')
 
         # check if LUN is reachable
-        iscsi_rec = iscsilib.discovery(self.target, self.port, self.chapuser, self.chappass, iqn)  # TODO Chap
-        log(iscsi_rec)
+        create_iscsi_record(self.target, self.port, iqn)
 
         return iqn
 
@@ -480,7 +478,6 @@ class VDILUN(VDI.VDI):
         return False
 
     def _get_vdi_from_xapi(self, vdi_uuid):
-
         vdi = {}
         try:
             vdi_ref = self.sr.session.xenapi.VDI.get_by_uuid(vdi_uuid)
@@ -489,7 +486,6 @@ class VDILUN(VDI.VDI):
             pass
 
         return vdi
-
 
 
 if __name__ == '__main__':
