@@ -245,6 +245,9 @@ class VDILUNSR(SR.SR):
     def scan(self, sr_uuid):
         log("vdilunsr scan UUID:%s" % sr_uuid)
 
+    def refresh(self, sr_uuid):
+        log("vdilunsr refresh UUID:%s" % sr_uuid)
+
     def vdi(self, uuid):
         return VDILUN(self, uuid)
 
