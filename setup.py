@@ -20,7 +20,7 @@ if None in (options.originator, options.vendor, options.name,
 if not options.iso and not options.tar:
     raise SystemExit, "One of --tar and --iso required"
 
-xcp = Requires(originator='xcp', name='main', test='eq', 
+xcp = Requires(originator='xcp', name='main', test='ge', 
                product='XCP', version='1.9.0', 
                build='89900c')
 
