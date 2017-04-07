@@ -82,28 +82,20 @@ Copy the `ReLVHDoISCSISR.iso` from this repo to the XenServer host where you wan
 
 ```
 
-Mount the iso on the XenServer and run the install script. Restart XAPI after install. 
+Also copy the `sahmed_pub.crt` which contains the public key for the update
+```bash
+
+# scp sahmed_pub.crt root@172.31.0.33:
+
+```
+
+Find the SR which has enough free space (in the example below I am using the localstorage SR)
 
 ```bash
 
-[root@coe-hq-xen03 ~]# mkdir /tmp/isomount
-[root@coe-hq-xen03 ~]# mount ReLVHDoISCSISR.iso /tmp/isomount/ -o loop
-mount: ReLVHDoISCSISR.iso is write-protected, mounting read-only
-[root@coe-hq-xen03 ~]# cd /tmp/isomount/
-[root@coe-hq-xen03 isomount]# ./install.sh 
-Installing 'LVHDoISCSISR with SR resigning'...
-
-Preparing...                ########################################### [100%]
-   1:ReLVHDoISCSISR         ########################################### [100%]
-Pack installation successful.
-[root@coe-hq-xen03 isomount]# service xapi restart
-Stopping xapi: ..                                          [  OK  ]
-Starting xapi: OK                                          [  OK  ]
-[root@coe-hq-xen03 isomount]# cd
-[root@coe-hq-xen03 ~]# umount /tmp/isomount 
-[root@coe-hq-xen03 ~]# rm ReLVHDoISCSISR.iso 
-rm: remove regular file `ReLVHDoISCSISR.iso'? y
-[root@coe-hq-xen03 ~]# 
+# /opt/xensource/debug/import-update-key sahmed_pub.crt
+# xe-install-supplemental-pack --sr=91beb933-98de-fa87-ff27-8ff13234c5b6 ReLVHDoISCSISR.iso
+# service xapi restart
 
 ```
 
