@@ -2,14 +2,19 @@
 SPEC := ReLVHDoISCSISR.spec
 VENDOR_CODE := cloudops
 VENDOR_NAME := CloudOps Inc.
-LABEL = $(PACKAGE_NAME)
+LABEL = $(DRIVER_NAME)
 TEXT := LVHDoISCSISR with SR resigning
+UUID := d7c435bd-90e6-43d1-b81f-37785ac1f347
 
 # versioning of pack
 PACK_VERSION = $(XENSERVER_VERSION)
 PACK_BUILD = $(XENSERVER_BUILD)
+BASE_REQUIRES = product-version = $(XENSERVER_VERSION)
 
-# versioning of RPM
+# key to sign update with
+GPG_KEY_FILE := sahmed_pub.crt
+
+# versioning of kernel module RPMs
 RPM_VERSION := 1.0
 RPM_RELEASE := 1
 
@@ -17,30 +22,34 @@ RPM_RELEASE := 1
 RPMDIR := $(shell rpm --eval %{_rpmdir})
 RPMSOURCES := $(shell rpm --eval %{_sourcedir})
 ARCH := $(shell uname -p)
-XENSERVER_VERSION := $(shell set -- `tr '-' ' ' </etc/redhat-release` && echo $$4)
-XENSERVER_BUILD := $(shell set -- `tr '-' ' ' </etc/redhat-release` && echo $$5)
-PACKAGE_NAME := $(shell sed -ne 's/^Name: *//p' $(SPEC))
-ISO := $(PACKAGE_NAME).iso
-ISO_MD5 := $(ISO).md5
-TAR := $(PACKAGE_NAME).tar.gz
-METADATA_MD5 := $(PACKAGE_NAME).metadata.md5
+XENSERVER_VERSION := $(shell . /etc/os-release ; IFS=- ; set -- $$VERSION ; echo $$1)
+XENSERVER_BUILD := $(shell . /etc/os-release ; IFS=- ; set -- $$VERSION ; echo $$2)
+KERNEL_VERSION := $(shell uname -r)
+DRIVER_NAME := $(shell sed -ne 's/^Name: *//p' $(SPEC))
+ISO := $(DRIVER_NAME).iso
+GPG_UID = $(shell gpg --batch -k --with-colons 2>/dev/null | awk -F: '$$1=="uid" {print $$10}')
 
-RPMS := $(PACKAGE_NAME)-$(RPM_VERSION)-$(RPM_RELEASE)
-RPM_FILES := $(patsubst %, $(RPMDIR)/$(ARCH)/%.$(ARCH).rpm, $(RPMS))
+RPM := $(DRIVER_NAME)-$(RPM_VERSION)-$(RPM_RELEASE)
+RPM_FILE := $(RPM:%=$(RPMDIR)/$(ARCH)/%.$(ARCH).rpm)
+SOURCE_TARBALL := $(RPMSOURCES)/$(DRIVER_NAME)-$(RPM_VERSION).tar.gz
 
 
-build-iso: build-rpms
-	python setup.py --output=$(dir $(ISO)) --iso --vendor-code=$(VENDOR_CODE) "--vendor-name=$(VENDOR_NAME)" --label=$(LABEL) "--text=$(TEXT)" --version=$(PACK_VERSION) --build=$(PACK_BUILD) $(RPM_FILES)
+$(ISO): $(RPM_FILE) $(GPG_KEY_FILE)
+	sed -e 's/@DRIVER@/$(DRIVER_NAME)/g' groups.xml >/tmp/groups.xml
+	build-update --uuid $(UUID) --label "$(LABEL)" --version $(PACK_VERSION) \
+		--description "$(TEXT)" --base-requires "$(BASE_REQUIRES)" --groupfile /tmp/groups.xml \
+		--key "$(GPG_UID)" --keyfile $(GPG_KEY_FILE) \
+		-o $@ $(RPM_FILE)
 
-build-tarball: build-rpms
-	python setup.py --output=$(dir $(ISO)) --tar --vendor-code=$(VENDOR_CODE) "--vendor-name=$(VENDOR_NAME)" --label=$(LABEL) "--text=$(TEXT)" --version=$(PACK_VERSION) --build=$(PACK_BUILD) $(RPM_FILES)
+$(RPM_FILE): $(SPEC) $(SOURCE_TARBALL)
+	rpmbuild -bb --define "kernel_version $(KERNEL_VERSION)" --define "version $(RPM_VERSION)" --define "release $(RPM_RELEASE)" $<
 
-build-rpms: build-srctarballs
-	rpmbuild -bb --define "version $(RPM_VERSION)" --define "release $(RPM_RELEASE)" $(SPEC)
+$(SOURCE_TARBALL):
+	mkdir -p $(@D)
+	tar zcvf $@ $(DRIVER_NAME)-$(RPM_VERSION)
 
-build-srctarballs:
-	mkdir -p $(RPMSOURCES)
-	tar zcvf $(RPMSOURCES)/$(PACKAGE_NAME)-$(RPM_VERSION).tar.gz $(PACKAGE_NAME)-$(RPM_VERSION)
+$(GPG_KEY_FILE):
+	generate-test-key $@
 
 clean:
-	rm -f $(ISO) $(ISO_MD5) $(TAR) $(METADATA_MD5)
+	rm -f $(ISO)

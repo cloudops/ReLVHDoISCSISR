@@ -1,0 +1,23 @@
+<!DOCTYPE comps PUBLIC "-//Red Hat, Inc.//DTD Comps info//EN" "comps.dtd">
+<comps>
+  <group>
+   <id>update</id>
+   <default>False</default>
+   <uservisible>True</uservisible>
+   <name>LVHDoISCSI driver for VDI-per-LUN resignature</name>
+   <description>LVHDoISCSI driver for VDI-per-LUN resignature</description>
+    <packagelist>
+      <packagereq type="mandatory">update-@DRIVER@</packagereq>
+    </packagelist>
+  </group>
+  <group>
+   <id>drivers</id>
+   <default>False</default>
+   <uservisible>True</uservisible>
+   <name></name>
+   <description>LVHDoISCSI driver for VDI-per-LUN resignature</description>
+    <packagelist>
+      <packagereq type="mandatory">update-@DRIVER@</packagereq>
+    </packagelist>
+  </group>
+</comps>

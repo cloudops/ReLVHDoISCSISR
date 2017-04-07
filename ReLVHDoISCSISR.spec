@@ -25,6 +25,7 @@ find . -path \*filelist -prune -type f -o -type f -print | sed -e 's#^./#/#' >fi
 rm -rf $RPM_BUILD_ROOT
 
 %files -f filelist
+/opt/xensource/sm/*
 
 %post
 
