@@ -1,3 +1,6 @@
+
+# NOTE: For XenServer 7.1 look at the xs71 branch
+
 # ReLVHDoISCSISR
 
 This Xenserver supplemental pack allows the functionality to resignature a
