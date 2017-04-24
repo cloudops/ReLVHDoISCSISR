@@ -25,6 +25,7 @@ import iscsilib
 import xs_errors
 import xml.dom.minidom
 from lock import Lock
+import sys
 
 CAPABILITIES = ["SR_PROBE", "VDI_CREATE", "VDI_DELETE", "VDI_ATTACH",
                 "VDI_DETACH", "VDI_RESIZE", "VDI_INTRODUCE"]
@@ -64,6 +65,7 @@ MAX_LUNID_TIMEOUT = 60
 ISCSI_PROCNAME = "iscsi_tcp"
 SR_TYPE_VDILUN = "vdilun"
 VHD_COOKIE = "conectix"
+MAXINT = sys.maxint
 
 def log(message):
     pass
@@ -181,7 +183,8 @@ class VDILUNSR(SR.SR):
         self.uuid = sr_uuid
 
         self.sm_config = self.session.xenapi.SR.get_sm_config(self.sr_ref)
-
+        self.physical_utilisation = 0
+        self.physical_size = MAXINT
 
     def attach(self, sr_uuid):
         log("VDILUN SR attach UUID: %s" % sr_uuid)
@@ -243,6 +246,9 @@ class VDILUNSR(SR.SR):
 
 
     def scan(self, sr_uuid):
+        self.physical_size = MAXINT
+        self.physical_utilisation = 0
+        self._db_update()
         log("vdilunsr scan UUID:%s" % sr_uuid)
 
     def refresh(self, sr_uuid):
@@ -257,11 +263,13 @@ class VDILUNSR(SR.SR):
 
     def _updateStats(self, uuid, virtAllocDelta):
         valloc = int(self.session.xenapi.SR.get_virtual_allocation(self.sr_ref))
-        # TODO Fix
+        # TODO: We actually don't know what the origial utilization is. For now
+        # just set it to a constant huge size
+
         # self.virtual_allocation = valloc + virtAllocDelta
-        # self.physical_utilisation = self.virtual_allocation
-        # self.physical_size = self.physical_utilisation
-        # self._db_update()
+        self.physical_utilisation = 0
+        self.physical_size = MAXINT
+        self._db_update()
 
     def srlist_toxml(self, SRs):
         dom = xml.dom.minidom.Document()
