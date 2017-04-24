@@ -248,6 +248,7 @@ class VDILUNSR(SR.SR):
     def scan(self, sr_uuid):
         self.physical_size = MAXINT
         self.physical_utilisation = 0
+        self._db_update()
         log("vdilunsr scan UUID:%s" % sr_uuid)
 
     def refresh(self, sr_uuid):
