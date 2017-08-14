@@ -16,7 +16,7 @@ GPG_KEY_FILE := sahmed_pub.crt
 
 # versioning of kernel module RPMs
 RPM_VERSION := 1.0
-RPM_RELEASE := 1
+RPM_RELEASE := 2
 
 # no changes below here
 RPMDIR := $(shell rpm --eval %{_rpmdir})

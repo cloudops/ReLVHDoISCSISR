@@ -191,10 +191,6 @@ class VDILUNSR(SR.SR):
         iscsilib.ensure_daemon_running_ok(self.localIQN)
 
     def detach(self, sr_uuid):
-        # Should logout of all the LUNS?
-        if not self.isMaster:
-            raise xs_errors.XenError('LVMMaster')
-
         # delete only when there are no VDIs
         self.vdis_in_sr = self.session.xenapi.SR.get_VDIs(self.sr_ref)
         if len(self.vdis_in_sr) > 0:
@@ -225,6 +221,9 @@ class VDILUNSR(SR.SR):
         self.session.xenapi.SR.set_sm_config(self.sr_ref, self.sm_config)
 
     def delete(self, sr_uuid):
+        # Should logout of all the LUNS?
+        if not self.isMaster:
+            raise xs_errors.XenError('LVMMaster')
         self.detach(sr_uuid)
 
     def probe(self):
@@ -417,8 +416,10 @@ class VDILUN(VDI.VDI):
         size = util.roundup(self.VHD_SIZE_INC, size)
         old_size = self.size
 
-        if not _checkTGT(self.iqn):
-            self.attach(sr_uuid, vdi_uuid)
+        if _checkTGT(self.iqn):
+            raise xs_errors.XenError('VDIInUse')
+
+        self.attach(sr_uuid, vdi_uuid)
 
         vhdutil.setSizeVirtFast(self.path, size)
         self.size = vhdutil.getSizeVirt(self.path)
