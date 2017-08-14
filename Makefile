@@ -11,7 +11,7 @@ PACK_BUILD = $(XENSERVER_BUILD)
 
 # versioning of RPM
 RPM_VERSION := 1.0
-RPM_RELEASE := 1
+RPM_RELEASE := 2
 
 # no changes below here
 RPMDIR := $(shell rpm --eval %{_rpmdir})
