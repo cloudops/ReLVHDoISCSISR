@@ -4,10 +4,10 @@ VENDOR_CODE := cloudops
 VENDOR_NAME := CloudOps Inc.
 LABEL = $(DRIVER_NAME)
 TEXT := LVHDoISCSISR with SR resigning
-UUID := bdedd143-183a-4e9b-bed8-ceeaf633ba5b
+UUID := a3040940-2289-4ce5-a2f9-bdc703de0981
 
 # versioning of pack
-PACK_VERSION = 7.1.1
+PACK_VERSION = 7.1.3
 PACK_BUILD = $(XENSERVER_BUILD)
 BASE_REQUIRES = product-version = $(XENSERVER_VERSION)
 
@@ -16,7 +16,7 @@ GPG_KEY_FILE := sahmed_pub.crt
 
 # versioning of kernel module RPMs
 RPM_VERSION := 1.0
-RPM_RELEASE := 2
+RPM_RELEASE := 3
 
 # no changes below here
 RPMDIR := $(shell rpm --eval %{_rpmdir})
