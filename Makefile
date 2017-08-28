@@ -4,10 +4,10 @@ VENDOR_CODE := cloudops
 VENDOR_NAME := CloudOps Inc.
 LABEL = $(DRIVER_NAME)
 TEXT := LVHDoISCSISR with SR resigning
-UUID := d7c435bd-90e6-43d1-b81f-37785ac1f347
+UUID := bdedd143-183a-4e9b-bed8-ceeaf633ba5b
 
 # versioning of pack
-PACK_VERSION = $(XENSERVER_VERSION)
+PACK_VERSION = 7.1.1
 PACK_BUILD = $(XENSERVER_BUILD)
 BASE_REQUIRES = product-version = $(XENSERVER_VERSION)
 
