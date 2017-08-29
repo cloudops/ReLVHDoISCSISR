@@ -4,7 +4,7 @@ VENDOR_CODE := cloudops
 VENDOR_NAME := CloudOps Inc.
 LABEL = $(DRIVER_NAME)
 TEXT := LVHDoISCSISR with SR resigning
-UUID := a3040940-2289-4ce5-a2f9-bdc703de0981
+UUID := b7162cdc-9d8c-4dcf-9986-f62b7f6fcb15
 
 # versioning of pack
 PACK_VERSION = 7.1.4
