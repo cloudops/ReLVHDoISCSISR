@@ -197,7 +197,7 @@ class VDILUNSR(SR.SR):
 
         # delete only when there are no VDIs
         self.vdis_in_sr = self.session.xenapi.SR.get_VDIs(self.sr_ref)
-        if self.isMaster && len(self.vdis_in_sr) > 0:
+        if self.isMaster and len(self.vdis_in_sr) > 0:
             raise xs_errors.XenError('SRNotEmpty')
 
         # do nothing, the  map will automatically be removed
