@@ -7,7 +7,7 @@ TEXT := LVHDoISCSISR with SR resigning
 UUID := a3040940-2289-4ce5-a2f9-bdc703de0981
 
 # versioning of pack
-PACK_VERSION = 7.1.3
+PACK_VERSION = 7.1.4
 PACK_BUILD = $(XENSERVER_BUILD)
 BASE_REQUIRES = product-version = $(XENSERVER_VERSION)
 
@@ -16,7 +16,7 @@ GPG_KEY_FILE := sahmed_pub.crt
 
 # versioning of kernel module RPMs
 RPM_VERSION := 1.0
-RPM_RELEASE := 3
+RPM_RELEASE := 4
 
 # no changes below here
 RPMDIR := $(shell rpm --eval %{_rpmdir})
