@@ -10,6 +10,8 @@ UUID := b7162cdc-9d8c-4dcf-9986-f62b7f6fcb15
 PACK_VERSION = 7.1.4
 PACK_BUILD = $(XENSERVER_BUILD)
 BASE_REQUIRES = product-version = $(XENSERVER_VERSION)
+ROLLUPS := d7c435bd-90e6-43d1-b81f-37785ac1f347,bdedd143-183a-4e9b-bed8-ceeaf633ba5b,a3040940-2289-4ce5-a2f9-bdc703de0981
+
 
 # key to sign update with
 GPG_KEY_FILE := sahmed_pub.crt
@@ -38,7 +40,7 @@ $(ISO): $(RPM_FILE) $(GPG_KEY_FILE)
 	sed -e 's/@DRIVER@/$(DRIVER_NAME)/g' groups.xml >/tmp/groups.xml
 	build-update --uuid $(UUID) --label "$(LABEL)" --version $(PACK_VERSION) \
 		--description "$(TEXT)" --base-requires "$(BASE_REQUIRES)" --groupfile /tmp/groups.xml \
-		--key "$(GPG_UID)" --keyfile $(GPG_KEY_FILE) \
+		--key "$(GPG_UID)" --keyfile $(GPG_KEY_FILE) --rollups $(ROLLUPS)\
 		-o $@ $(RPM_FILE)
 
 $(RPM_FILE): $(SPEC) $(SOURCE_TARBALL)
