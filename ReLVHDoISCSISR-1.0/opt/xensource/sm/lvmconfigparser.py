@@ -163,7 +163,7 @@ class LvmConfigParser(object):
                 self.out_str = self.out_str[:-3]
             self.out_str += "]\n"
 
-        elif type(data) == str:
+        elif type(data) == str or type(data) == unicode:
             self.out_str += '"%s"' % data
 
         else:
