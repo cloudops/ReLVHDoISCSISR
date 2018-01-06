@@ -18,7 +18,7 @@ GPG_KEY_FILE := sahmed_pub.crt
 
 # versioning of kernel module RPMs
 RPM_VERSION := 1.0
-RPM_RELEASE := 4
+RPM_RELEASE := 5
 
 # no changes below here
 RPMDIR := $(shell rpm --eval %{_rpmdir})
@@ -40,7 +40,7 @@ SOURCE_TARBALL := $(RPMSOURCES)/$(DRIVER_NAME)-$(RPM_VERSION).tar.gz
 $(ISO): $(RPM_FILE) $(GPG_KEY_FILE)
 	sed -e 's/@DRIVER@/$(DRIVER_NAME)/g' groups.xml >/tmp/groups.xml
 	build-update --uuid $(UUID) --label "$(LABEL)" --version $(PACK_VERSION) \
-		--description "$(TEXT)" --base-requires "$(BASE_REQUIRES)" --groupfile /tmp/groups.xml \
+		--description "$(TEXT)" --groupfile /tmp/groups.xml \
 		--key "$(GPG_UID)" --keyfile $(GPG_KEY_FILE) --rollups $(ROLLUPS)\
 		-o $@ $(RPM_FILE)
 
