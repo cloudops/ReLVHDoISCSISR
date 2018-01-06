@@ -4,13 +4,13 @@ VENDOR_CODE := cloudops
 VENDOR_NAME := CloudOps Inc.
 LABEL = $(DRIVER_NAME)
 TEXT := LVHDoISCSISR with SR resigning
-UUID := b7162cdc-9d8c-4dcf-9986-f62b7f6fcb15
+UUID := e4b9fe85-ffe6-4cbf-9fcb-1d88ecf5b102
 
 # versioning of pack
-PACK_VERSION = 7.1.4
+PACK_VERSION = 7.1.5
 PACK_BUILD = $(XENSERVER_BUILD)
 BASE_REQUIRES = product-version = $(XENSERVER_VERSION)
-ROLLUPS := d7c435bd-90e6-43d1-b81f-37785ac1f347,bdedd143-183a-4e9b-bed8-ceeaf633ba5b,a3040940-2289-4ce5-a2f9-bdc703de0981
+ROLLUPS := d7c435bd-90e6-43d1-b81f-37785ac1f347,bdedd143-183a-4e9b-bed8-ceeaf633ba5b,a3040940-2289-4ce5-a2f9-bdc703de0981,b7162cdc-9d8c-4dcf-9986-f62b7f6fcb15
 
 
 # key to sign update with
@@ -24,7 +24,8 @@ RPM_RELEASE := 4
 RPMDIR := $(shell rpm --eval %{_rpmdir})
 RPMSOURCES := $(shell rpm --eval %{_sourcedir})
 ARCH := $(shell uname -p)
-XENSERVER_VERSION := $(shell . /etc/os-release ; IFS=- ; set -- $$VERSION ; echo $$1)
+# XENSERVER_VERSION := $(shell . /etc/os-release ; IFS=- ; set -- $$VERSION ; echo $$1)
+XENSERVER_VERSION := 7.1.1
 XENSERVER_BUILD := $(shell . /etc/os-release ; IFS=- ; set -- $$VERSION ; echo $$2)
 KERNEL_VERSION := $(shell uname -r)
 DRIVER_NAME := $(shell sed -ne 's/^Name: *//p' $(SPEC))
